@@ -5,7 +5,9 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+html {
+  overflow-x: hidden;
+}
 body{
   height: 100vh;
   font-family: 'Inter Variable', sans-serif;

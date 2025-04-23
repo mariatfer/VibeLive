@@ -1,4 +1,4 @@
-@mixin flex ($direction: row, $justify: center, $align: center, $wrap: nowrap, $gap: 0, $grow: initial){
+@mixin flex ($direction: row, $justify: center, $align: center, $wrap: nowrap, $gap: 0, $grow: unset){
     display: flex;
     flex-flow: $direction $wrap;
     place-content: $align $justify;
