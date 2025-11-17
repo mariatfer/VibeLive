@@ -1,0 +1,17 @@
+export const ICONS = {
+  options: 'mi:options-vertical',
+  arrowDown: 'ep:arrow-down-bold',
+  search: 'lets-icons:search',
+  crown: 'gg:crown',
+  user: 'ri:user-3-line',
+  menu: 'material-symbols:menu-rounded',
+  shared: 'prime:upload',
+  star: 'lsicon:star-outline',
+  favorite: 'ic:outline-favorite-border',
+  collapse: 'line-md:arrow-close-left',
+  verified: 'material-symbols:verified',
+  youtube: 'mdi:youtube',
+  x: 'ri:twitter-x-fill',
+  instagram: 'mdi:instagram',
+  tiktok: 'ic:baseline-tiktok',
+}
