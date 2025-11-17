@@ -31,12 +31,12 @@ onMounted(() => {
 <template>
   <div class="container">
     <header class="container__header">
-      <HeaderLeft />
-      <HeaderCenter />
-      <HeaderRight />
+      <UiNavbarHeaderLeft />
+      <UiNavbarHeaderCenter />
+      <UiNavbarHeaderRight />
     </header>
     <main class="container__main">
-      <TheAside />
+      <UiAsideTheAside />
       <slot />
     </main>
   </div>
@@ -47,7 +47,7 @@ onMounted(() => {
   @include flex(column);
   &__header {
     height: 3.125rem;
-    background-color: var(--c-midgrey);
+    background-color: var(--c-mid-gray);
     padding: 0 1.25rem;
     @include flex(row, space-between, center);
   }
@@ -56,7 +56,7 @@ onMounted(() => {
     width: 100%;
     padding: 1.25rem;
     @media screen and (max-width: 48rem) {
-      @include flex(column, flex-start, center, nowrap, .5rem);
+      @include flex(column, flex-start, center, nowrap, 0.5rem);
     }
   }
 }
