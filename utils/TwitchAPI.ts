@@ -1,6 +1,65 @@
 import FetchError from '@/utils/FetchError'
 import { tags } from '@/mocks/tags'
-import type { Stream, TokenResponse, UserData, ApiResponse, Category, Tag, User } from '@/types/types'
+import type {
+  Stream,
+  TokenResponse,
+  UserData,
+  ApiResponse,
+  Category,
+  Tag,
+  User,
+  FollowersApiResponse,
+} from '@/interfaces/twitch'
+
+async function fetchTwitchAPI<T>(
+  url: string,
+  accessToken?: string,
+  clientId?: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  }
+
+  if (clientId) headers['Client-ID'] = clientId
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`
+
+  const response = await fetch(url, { ...options, headers })
+
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ message: response.statusText }))
+    throw new FetchError(
+      `Error ${response.status}: ${errorData.message || 'Unknown error'}`,
+    )
+  }
+
+  return await response.json()
+}
+
+export async function getToken(): Promise<TokenResponse> {
+  const clientId = import.meta.env.VITE_TWITCH_CLIENT_ID
+  const clientSecret = import.meta.env.VITE_TWITCH_CLIENT_SECRET
+  const authUrl = 'https://id.twitch.tv/oauth2/token'
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    grant_type: 'client_credentials',
+  })
+
+  try {
+    return await fetchTwitchAPI<TokenResponse>(authUrl, undefined, undefined, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+    })
+  } catch (error) {
+    throw new FetchError('Failed to fetch Twitch token: ' + error)
+  }
+}
 
 export class TwitchAPI {
   private clientId: string
@@ -14,65 +73,61 @@ export class TwitchAPI {
   }
 
   public async getAuthorizationUrl(): Promise<string> {
-    const scope = 'user:read:email'
-    const state = this.generateState()
-    const url = new URL('https://id.twitch.tv/oauth2/authorize')
-    url.searchParams.append('client_id', this.clientId)
-    url.searchParams.append('redirect_uri', this.redirectUri)
-    url.searchParams.append('response_type', 'code')
-    url.searchParams.append('scope', scope)
-    url.searchParams.append('state', state)
+    const params = {
+      client_id: this.clientId,
+      redirect_uri: this.redirectUri,
+      response_type: 'code',
+      scope: 'user:read:email',
+      state: this.generateState(),
+    }
 
+    const url = new URL('https://id.twitch.tv/oauth2/authorize')
+    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value))
     return url.toString()
   }
 
   public async exchangeCodeForToken(code: string): Promise<TokenResponse> {
-    const url = 'https://id.twitch.tv/oauth2/token'
     const params = new URLSearchParams({
       client_id: this.clientId,
       client_secret: this.clientSecret,
-      code: code,
+      code,
       grant_type: 'authorization_code',
       redirect_uri: this.redirectUri,
     })
 
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    return await fetchTwitchAPI<TokenResponse>(
+      'https://id.twitch.tv/oauth2/token',
+      undefined,
+      undefined,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params,
       },
-      body: params,
-    }
-
-    const response = await fetch(url, options)
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new FetchError('Error obtaining token:' + errorData.message)
-    }
-
-    const tokenData: TokenResponse = await response.json()
-    return tokenData
+    )
   }
 
   public async getUserData(accessToken: string): Promise<UserData> {
-    const url = 'https://api.twitch.tv/helix/users'
+    return await fetchTwitchAPI<UserData>(
+      'https://api.twitch.tv/helix/users',
+      accessToken,
+      this.clientId,
+    )
+  }
 
-    const options = {
-      method: 'GET',
-      headers: {
-        'Client-ID': this.clientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
+  private async getUsersByIds(
+    accessToken: string,
+    userIds: string[],
+  ): Promise<Map<string, string>> {
+    if (userIds.length === 0) return new Map()
 
-    const response = await fetch(url, options)
+    const uniqueIds = [...new Set(userIds)]
+    const idsParam = uniqueIds.map((id) => `id=${id}`).join('&')
+    const url = `https://api.twitch.tv/helix/users?${idsParam}`
 
-    if (!response.ok) {
-      throw new FetchError('Error obtaining user data')
-    }
+    const data = await fetchTwitchAPI<ApiResponse<User>>(url, accessToken, this.clientId)
 
-    return await response.json()
+    return new Map(data.data.map((user) => [user.id, user.profile_image_url]))
   }
 
   public async getLiveStreams(
@@ -80,148 +135,93 @@ export class TwitchAPI {
     limit: number = 12,
   ): Promise<ApiResponse<Stream>> {
     const url = `https://api.twitch.tv/helix/streams?first=${limit}&language=es`
-
-    const options = {
-      method: 'GET',
-      headers: {
-        'Client-ID': this.clientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-
-    const response = await fetch(url, options)
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new FetchError('Error obtaining live streams: ' + errorData.message)
-    }
-
-    const data: ApiResponse<Stream> = await response.json()
-
-    const streamsWithProfileImages = await Promise.all(
-      data.data.map(async (stream) => {
-        const userUrl = `https://api.twitch.tv/helix/users?id=${stream.user_id}`
-        const userResponse = await fetch(userUrl, {
-          method: 'GET',
-          headers: {
-            'Client-ID': this.clientId,
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-
-        if (!userResponse.ok) {
-          const userError = await userResponse.json()
-          throw new FetchError('Error obtaining user data: ' + userError.message)
-        }
-
-        const userData = await userResponse.json()
-        const profileImageUrl = userData.data[0].profile_image_url
-
-        return {
-          ...stream,
-          profile_image_url: profileImageUrl,
-        }
-      }),
+    const data = await fetchTwitchAPI<ApiResponse<Stream>>(
+      url,
+      accessToken,
+      this.clientId,
     )
+
+    const userIds = data.data.map((stream) => stream.user_id)
+    const profileImages = await this.getUsersByIds(accessToken, userIds)
+
+    const streamsWithProfileImages = data.data.map((stream) => ({
+      ...stream,
+      profile_image_url: profileImages.get(stream.user_id) || '',
+    }))
 
     return {
       ...data,
       data: streamsWithProfileImages,
     }
   }
-  
+
   public async getCategoriesWithViewersAndTags(
     accessToken: string,
     limit: number = 7,
   ): Promise<Category[]> {
-    const url = `https://api.twitch.tv/helix/games/top?first=${limit}`;
-    const options = {
-      method: 'GET',
-      headers: {
-        'Client-ID': this.clientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    };
-  
-    const response = await fetch(url, options);
-  
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new FetchError('Error fetching categories: ' + errorData.message);
-    }
-  
-    const data: ApiResponse<Category> = await response.json();
+    const url = `https://api.twitch.tv/helix/games/top?first=${limit}`
+    const data = await fetchTwitchAPI<ApiResponse<Category>>(
+      url,
+      accessToken,
+      this.clientId,
+    )
 
     const categoriesWithDetails = await Promise.all(
       data.data.map(async (category) => {
-        const viewerCount = await this.getViewerCountForCategory(category.id, accessToken);
-        const randomTags = this.getRandomTags();
-  
+        const viewerCount = await this.getViewerCountForCategory(category.id, accessToken)
         return {
           ...category,
           box_art_url: category.box_art_url
             .replace('{width}', '285')
             .replace('{height}', '380'),
           viewer_count: viewerCount,
-          tags: randomTags,
-        };
+          tags: this.getRandomTags(),
+        }
       }),
-    );
-  
-    return categoriesWithDetails;
+    )
+
+    return categoriesWithDetails
   }
-  
-  private async getViewerCountForCategory(categoryId: string, accessToken: string): Promise<number> {
-    const url = `https://api.twitch.tv/helix/streams?game_id=${categoryId}`;
-    const options = {
-      method: 'GET',
-      headers: {
-        'Client-ID': this.clientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    };
-  
-    const response = await fetch(url, options);
-  
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new FetchError('Error fetching streams for category:' + errorData.message);
-    }
-  
-    const data = await response.json();
-  
-    return data.data.reduce((total: number, stream: Stream) => total + stream.viewer_count, 0);
+
+  private async getViewerCountForCategory(
+    categoryId: string,
+    accessToken: string,
+  ): Promise<number> {
+    const url = `https://api.twitch.tv/helix/streams?game_id=${categoryId}`
+    const data = await fetchTwitchAPI<ApiResponse<Stream>>(
+      url,
+      accessToken,
+      this.clientId,
+    )
+
+    return data.data.reduce((total, stream) => total + stream.viewer_count, 0)
   }
 
   private getRandomTags(): Tag[] {
-
-    const shuffledTags = [...tags].sort(() => 0.5 - Math.random());
-    return shuffledTags.slice(0, 2);
+    const shuffled = [...tags].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, 2)
   }
 
   private generateState(): string {
-    return Math.random().toString(36).substring(7)
+    return crypto.randomUUID?.() || Math.random().toString(36).substring(2, 15)
   }
 
   public async getUserInfo(accessToken: string, userId: string): Promise<User> {
-    const url = `https://api.twitch.tv/helix/users?id=${userId}`;
-    const options = {
-      method: 'GET',
-      headers: {
-        'Client-ID': this.clientId,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    };
-
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new FetchError('Error fetching user info:' + errorData.message);
-    }
-
-    const data: ApiResponse<User> = await response.json();
-    return data.data[0];
+    const url = `https://api.twitch.tv/helix/users?id=${userId}`
+    const data = await fetchTwitchAPI<ApiResponse<User>>(url, accessToken, this.clientId)
+    return data.data[0]
   }
 
+  public async getFollowerCount(
+    accessToken: string,
+    broadcasterId: string,
+  ): Promise<number> {
+    const url = `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${broadcasterId}&first=1`
+    const data = await fetchTwitchAPI<FollowersApiResponse>(
+      url,
+      accessToken,
+      this.clientId,
+    )
+    return data.total
+  }
 }
