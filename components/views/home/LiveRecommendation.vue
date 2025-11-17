@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { Stream, ApiResponse } from '@/types/types'
-import { TwitchAPI } from '@/utils/TwitchAPI'
-import getToken from '@/utils/TwitchAuth'
+import type { Stream, ApiResponse } from '@/interfaces/twitch'
+import { TwitchAPI, getToken } from '@/utils/TwitchAPI'
 
 const twitchApi = new TwitchAPI()
 const streams = ref<Stream[]>([])
@@ -38,44 +37,27 @@ onMounted(() => {
 <template>
   <article class="live-recommendation">
     <h2 class="live-recommendation__title">
-      <span class="live-recommendation__title--blue">Live channels</span>&nbsp;we think
-      you'll like
+      <span class="live-recommendation__title--highlight">Live channels</span>&nbsp;we
+      think you'll like
     </h2>
     <div
       class="live-recommendation__content"
       :class="{ 'live-recommendation__content--expanded': isExpanded }"
     >
-      <StreamCard
-        v-for="stream in streams"
-        :id="stream.id"
-        :key="stream.id"
-        :user_id="stream.user_id"
-        :user_name="stream.user_name"
-        :game_id="stream.game_id"
-        :game_name="stream.game_name"
-        :title="stream.title"
-        :viewer_count="stream.viewer_count"
-        :thumbnail_url="stream.thumbnail_url"
-        :profile_image_url="stream.profile_image_url"
-        :tag_ids="stream.tag_ids || []"
-        :tags="stream.tags || []"
-        :started_at="stream.started_at"
-        :language="stream.language"
-      />
+      <ViewsHomeStreamCard v-for="stream in streams" :key="stream.id" v-bind="stream" />
     </div>
-    <ShowMore :is-expanded="isExpanded" @toggle-expand="toggleExpand" />
+    <ViewsHomeShowMore :is-expanded="isExpanded" @toggle-expand="toggleExpand" />
   </article>
 </template>
 
 <style lang="scss" scoped>
-
 .live-recommendation {
   @include flex(column, flex-start, flex-start, nowrap, 0.625rem);
   width: 100%;
   &__title {
-    color: var(--c-semilightgrey);
-    &--blue {
-      color: var(--c-blue);
+    color: var(--c-semi-light-gray);
+    &--highlight {
+      color: var(--c-primary);
     }
   }
   &__content {
@@ -84,9 +66,9 @@ onMounted(() => {
     gap: 2.3125rem;
     width: 100%;
     height: 19.875rem;
-    color: var(--c-semilightgrey);
+    color: var(--c-semi-light-gray);
     text-decoration: none;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.3s ease-in-out;
     overflow: hidden;
     @media screen and (max-width: 62.5rem) {
       grid-template-columns: repeat(auto-fill, minmax(20.3125rem, 23.875rem));

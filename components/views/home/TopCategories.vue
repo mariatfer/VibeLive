@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { TwitchAPI } from '@/utils/TwitchAPI'
-import getToken from '@/utils/TwitchAuth'
-import type { Category } from '@/types/types'
+import { TwitchAPI, getToken } from '@/utils/TwitchAPI'
+import type { Category } from '@/interfaces/twitch'
 import { hideElementsInSecondRow } from '@/utils/domUtils'
 
 const twitchApi = new TwitchAPI()
@@ -40,19 +39,14 @@ onUnmounted(() => {
 <template>
   <article class="top-categories">
     <h2 class="top-categories__title">
-      <span class="top-categories__title--blue">Categories</span>&nbsp;we think you'll
-      like
+      <span class="top-categories__title--highlight">Categories</span>&nbsp;we think
+      you'll like
     </h2>
     <div class="top-categories__content">
-      <CategoryCard
+      <ViewsHomeCategoryCard
         v-for="category in categories"
-        :id="category.id"
         :key="category.id"
-        :name="category.name"
-        :viewer_count="category.viewer_count"
-        :tag_ids="category.tag_ids || []"
-        :tags="category.tags || []"
-        :box_art_url="category.box_art_url"
+        v-bind="category"
         class="category-card"
       />
     </div>
@@ -64,15 +58,15 @@ onUnmounted(() => {
   @include flex(column, flex-start, flex-start, nowrap, 0.625rem);
   width: 100%;
   &__title {
-    color: var(--c-semilightgrey);
-    &--blue {
-      color: var(--c-blue);
+    color: var(--c-semi-light-gray);
+    &--highlight {
+      color: var(--c-primary);
     }
   }
   &__content {
     @include flex(row, flex-start, flex-start, wrap, 1.9rem);
     width: 100%;
-    color: var(--c-semilightgrey);
+    color: var(--c-semi-light-gray);
     text-decoration: none;
     transition: all 0.2s ease-in-out;
   }

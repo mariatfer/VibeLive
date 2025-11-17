@@ -1,20 +1,6 @@
 <script setup lang="ts">
-import SearchIcon from '@/components/icons/SearchIcon.vue'
+import { ICONS } from '@/constants/icons'
 const isMovile = ref(false)
-
-const searchButtonStyles = computed(() => {
-  return isMovile.value
-    ? {
-        background: 'var(--c-transparentgrey)',
-        borderTopLeftRadius: '0',
-        borderBottomLeftRadius: '0',
-      }
-    : {
-        background: 'transparent',
-        borderTopLeftRadius: '0',
-        borderBottomLeftRadius: '0',
-      }
-})
 
 function handleResize() {
   if (window.innerWidth >= 768) {
@@ -44,51 +30,55 @@ onUnmounted(() => {
       placeholder="Search"
       aria-label="Search"
       aria-describedby="search"
-    >
-    <TheButton :style="searchButtonStyles" class="search__button"
-      ><SearchIcon
-    /></TheButton>
+    />
+    <UiTheButton class="search__button">
+      <Icon :name="ICONS.search" class="search__icon" />
+    </UiTheButton>
   </section>
 </template>
 
 <style lang="scss" scoped>
 .search {
-  @include flex(row, center, center, wrap, 0);
+  @include flex(row, center, center, wrap);
   width: 100%;
   max-width: 30em;
   &__input {
-    border: 0.0625rem solid var(--c-regulargrey);
+    border: 0.0625rem solid var(--c-regular-gray);
     color: var(--c-white);
     border-top-left-radius: 0.3125rem;
     border-bottom-left-radius: 0.3125rem;
-    padding: 0.65rem;
+    padding: 0.4375rem;
     flex-grow: 1;
     min-width: 8rem;
-    background: transparent;
     transition: all 0.2s ease-in-out;
     &:focus {
       outline: none;
-      border-color: var(--c-blue);
+      border-color: var(--c-primary);
     }
     &:hover {
-      border-color: var(--c-blue);
+      border-color: var(--c-primary);
     }
     &::placeholder {
       transition: all 0.2s ease-in-out;
     }
     &:hover::placeholder {
-      color: var(--c-semilightgrey);
+      color: var(--c-semi-light-gray);
     }
   }
   &__button {
     padding: 0;
-    border: 0.0625rem solid var(--c-semigrey);
+    border: 0.0625rem solid var(--c-semi-gray);
     transition: all 0.2s ease-in-out;
     max-width: 2.125rem;
     width: 2.125rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     &:hover {
-      border: 0.0625rem solid var(--c-blue);
+      border: 0.0625rem solid var(--c-primary);
     }
+  }
+  &__icon {
+    font-size: 1.3rem;
   }
   @media screen and (max-width: 64rem) {
     & {

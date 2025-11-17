@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import UserIcon from '@/components/icons/UserIcon.vue'
-import NotificationIcon from '@/components/icons/NotificationIcon.vue'
-import MenuIcon from '@/components/icons/MenuIcon.vue'
-import { ref, onMounted } from 'vue'
 import { TwitchAPI } from '@/utils/TwitchAPI'
+import { ICONS } from '@/constants/icons'
 
 const twitchApi = new TwitchAPI()
 const authUrl = ref<string>('')
@@ -23,44 +20,27 @@ function redirectToAuthUrl() {
     console.error('Authorization URL is not available.')
   }
 }
-
-const primaryButton = {
-  background: 'var(--c-blue)',
-}
-
-const secundaryButton = {
-  background: 'var(--c-transparentgrey)',
-}
-
-const iconButton = {
-  background: 'transparent',
-}
-
-const notificationButton = {
-  background: 'transparent',
-  display: 'flex',
-  alignSelf: 'flex-end',
-}
 </script>
 
 <template>
   <section class="buttons">
     <div class="buttons__notification buttons--translate">
       <span class="buttons__notification--badge">63</span>
-      <TheButton :style="notificationButton"><NotificationIcon /></TheButton>
+      <UiTheButton :transparent="true"
+        ><Icon :name="ICONS.crown" class="buttons__notification--crown"
+      /></UiTheButton>
     </div>
-    <TheButton
-      :style="secundaryButton"
-      class="buttons--translate"
-      @click="redirectToAuthUrl"
-      >Log In</TheButton
+    <UiTheButton class="buttons--translate" @click="redirectToAuthUrl"
+      >Log In</UiTheButton
     >
-    <TheButton :style="primaryButton" class="buttons--translate">Sign Up</TheButton>
-    <TheButton :style="iconButton" class="buttons--translate"><UserIcon /></TheButton>
+    <UiTheButton :primary="true" class="buttons--translate">Sign Up</UiTheButton>
+    <UiTheButton :transparent="true" class="buttons--translate">
+      <Icon :name="ICONS.user" class="buttons__user" />
+    </UiTheButton>
   </section>
-  <TheButton :style="iconButton" class="buttons--translate menu-button"
-    ><MenuIcon
-  /></TheButton>
+  <UiTheButton :transparent="true" class="buttons--translate menu-button"
+    ><Icon :name="ICONS.menu" class="menu-button__icon"
+  /></UiTheButton>
 </template>
 
 <style lang="scss" scoped>
@@ -69,31 +49,48 @@ const notificationButton = {
 
   &__notification {
     position: relative;
-    @include flex(row);
-    transition: all 0.2s ease-in-out;
+    @include flex(column, space-between);
 
     &--badge {
       position: absolute;
-      top: -0.35rem;
+      top: -0.4rem;
       right: -0.15rem;
       width: fit-content;
       background-color: var(--c-red);
-      border: 0.1875rem solid var(--c-midgrey);
+      border: 0.1875rem solid var(--c-mid-gray);
       padding: 0.1rem 0.4rem;
       border-radius: 0.9375rem;
       font-size: 0.65rem;
       font-family: Arial, Helvetica, sans-serif;
+      z-index: 1;
+    }
+
+    &--crown {
+      font-size: 1.5rem;
     }
   }
+
+  &__user {
+    font-size: 1.35rem;
+  }
+
   &--translate {
     font-weight: 600;
+    will-change: transform;
+    transition: all 0.3s ease-in-out;
     &:hover {
       transform: translateY(-0.1rem);
+      .menu-button__icon {
+        color: var(--c-primary);
+      }
     }
   }
 }
 .menu-button {
   display: none;
+  &__icon {
+    font-size: 2.5rem;
+  }
 }
 @media (max-width: 64rem) {
   .menu-button {

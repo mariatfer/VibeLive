@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import YoutubeIcon from '@/components/icons/YoutubeIcon.vue'
-import InstagramIcon from '@/components/icons/InstagramIcon.vue'
-import TwitterIcon from '@/components/icons/TwitterIcon.vue'
-import TiktokIcon from '@/components/icons/TiktokIcon.vue'
-import { ref, onMounted } from 'vue'
-import { TwitchAPI } from '@/utils/TwitchAPI'
-import getToken from '@/utils/TwitchAuth'
-import type { Stream } from '@/types/types'
+import { TwitchAPI, getToken } from '@/utils/TwitchAPI'
+import type { Stream } from '@/interfaces/twitch'
+import { formatViewerCount } from '@/utils/formatters'
+import { ICONS } from '@/constants/icons'
 
 const props = defineProps<Stream>()
 const twitchApi = new TwitchAPI()
 const description = ref('')
+const followers = ref()
 const userId = props.user_id
 
 async function fetchChannelData() {
   try {
     const accessToken = await getToken()
     const userInfo = await twitchApi.getUserInfo(accessToken.access_token, userId)
+    const followersCount = await twitchApi.getFollowerCount(
+      accessToken.access_token,
+      userId,
+    )
     description.value = userInfo.description
+    followers.value = followersCount
   } catch (error) {
     throw new FetchError('Error fetching channel data:' + error)
   }
@@ -31,36 +33,43 @@ onMounted(() => {
 <template>
   <article class="channel-data">
     <p class="channel-data__stat">
-      <span class="channel-data__stat--followers">184M</span> followers
+      <span class="channel-data__stat--followers">{{
+        formatViewerCount(followers)
+      }}</span>
+      followers
     </p>
     <p class="channel-data__description">{{ description }}</p>
 
     <div class="channel-data__line" />
     <section class="channel-data__socials">
-      <a
+      <NuxtLink
         href="https://www.youtube.com/"
         target="_blank"
         class="channel-data__socials--link"
       >
-        <YoutubeIcon />Youtube
-      </a>
-      <a
+        <Icon :name="ICONS.youtube" class="channel-data__icons" />Youtube
+      </NuxtLink>
+      <NuxtLink
         href="https://www.instagram.com/"
         target="_blank"
         class="channel-data__socials--link"
       >
-        <InstagramIcon />Instagram
-      </a>
-      <a href="https://www.x.com/" target="_blank" class="channel-data__socials--link">
-        <TwitterIcon />Twitter
-      </a>
-      <a
+        <Icon :name="ICONS.instagram" class="channel-data__icons" />Instagram
+      </NuxtLink>
+      <NuxtLink
+        href="https://www.x.com/"
+        target="_blank"
+        class="channel-data__socials--link"
+      >
+        <Icon :name="ICONS.x" class="channel-data__icons" />Twitter
+      </NuxtLink>
+      <NuxtLink
         href="https://www.tiktok.com/"
         target="_blank"
         class="channel-data__socials--link"
       >
-        <TiktokIcon />Tiktok
-      </a>
+        <Icon :name="ICONS.tiktok" class="channel-data__icons" />Tiktok
+      </NuxtLink>
     </section>
   </article>
 </template>
@@ -69,13 +78,13 @@ onMounted(() => {
 .channel-data {
   @include flex(column, flex-start, flex-start, nowrap, 0.625rem);
   width: 100%;
-  background-color: var(--c-midgrey);
+  background-color: var(--c-mid-gray);
   padding: 1.25rem;
   &__stat {
     @include flex(row, flex-start, flex-end, nowrap, 0.625rem);
     width: 100%;
     font-weight: 600;
-    color: var(--c-semilightgrey);
+    color: var(--c-semi-light-gray);
     &--followers {
       color: var(--c-white);
       font-size: 1.125rem;
@@ -97,12 +106,15 @@ onMounted(() => {
     &--link {
       @include flex(row, flex-start, center, wrap, 0.3125rem);
       font-size: 1rem;
-      color: var(--c-semilightgrey);
+      color: var(--c-semi-light-gray);
       text-decoration: none;
       &:hover {
         text-decoration: underline;
       }
     }
+  }
+  &__icons {
+    font-size: 1.5rem;
   }
 }
 </style>

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import CollapseIcon from '@/components/icons/CollapseIcon.vue'
-import { ref, onMounted } from 'vue'
-import type { Stream, ApiResponse } from '@/types/types'
-import { TwitchAPI } from '@/utils/TwitchAPI'
-import getToken from '@/utils/TwitchAuth'
+import type { Stream, ApiResponse } from '@/interfaces/twitch'
+import { TwitchAPI, getToken } from '@/utils/TwitchAPI'
+import { ICONS } from '@/constants/icons'
 
 const twitchApi = new TwitchAPI()
 const recommendedChannels = ref<Stream[]>([])
@@ -45,23 +43,22 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
-
-const iconButton = {
-  background: 'transparent',
-  padding: 0,
-}
 </script>
 
 <template>
-  <aside :class="['aside', { 'aside--collapsed': isCollapsed && !isMovil}]">
+  <aside :class="['aside', { 'aside--collapsed': isCollapsed && !isMovil }]">
     <div class="aside__header">
       <h2 v-if="!isCollapsed" class="aside__header--title">Recommended channels</h2>
-      <TheButton :style="iconButton" class="aside__header--button" @click="toggleAside"
-        ><CollapseIcon
-      /></TheButton>
+      <UiTheButton
+        :transparent="true"
+        :no-padding="true"
+        class="aside__header--button"
+        @click="toggleAside"
+        ><Icon :name="ICONS.collapse" class="aside__header--icon"
+      /></UiTheButton>
     </div>
     <div class="aside__content">
-      <TheChannel
+      <UiAsideTheChannel
         v-for="channel in recommendedChannels"
         :key="channel.id"
         v-bind="channel"
@@ -87,10 +84,13 @@ const iconButton = {
       font-size: 0.8125rem;
     }
     &--button {
+      transition: all 0.3s ease-in-out;
       &:hover {
         transform: scale(1.1);
-        transition: all 0.3s ease-in-out;
       }
+    }
+    &--icon {
+      font-size: 1.25rem;
     }
   }
   @media screen and (max-width: 48rem) {

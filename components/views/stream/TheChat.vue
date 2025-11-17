@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import type { Stream } from '@/types/types'
-import CollapseIcon from '@/components/icons/CollapseIcon.vue'
+import type { Stream } from '@/interfaces/twitch'
+import { ICONS } from '@/constants/icons'
 defineProps<Stream>()
-definePageMeta({
-  layout: false,
-})
 
 const isCollapsed = ref(false)
 
@@ -29,18 +25,17 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
-
-const iconButton = {
-  background: 'transparent',
-  padding: 0,
-}
 </script>
 
 <template>
   <aside :class="['chat', { 'chat--collapsed': isCollapsed }]">
-    <TheButton :style="iconButton" class="chat__button" @click="toggleAside"
-      ><CollapseIcon
-    /></TheButton>
+    <UiTheButton
+      :transparent="true"
+      :no-padding="true"
+      class="chat__button"
+      @click="toggleAside"
+      ><Icon :name="ICONS.collapse" class="chat__icon"
+    /></UiTheButton>
     <iframe
       v-if="$props"
       :src="`https://www.twitch.tv/embed/${$props.user_name}/chat?parent=vibe-live.vercel.app&darkpopout=true&language=en`"
@@ -63,7 +58,13 @@ const iconButton = {
     transform: rotate(180deg);
     top: 0.625rem;
     left: 0.625rem;
+    transition: transform 0.3s ease-in-out;
   }
+
+  &__icon {
+    font-size: 1.25rem;
+  }
+
   &__iframe {
     position: relative;
     z-index: 1;
