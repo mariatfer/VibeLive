@@ -1,4 +1,4 @@
 export default {
-  "**/*.{ts,js,vue}": "eslint --fix",
-  "**/*.{vue,css,scss}": "stylelint --fix"
+  '**/*.{ts,js,vue}': ['eslint --fix'],
+  '**/*.{vue,css,scss}': ['stylelint --fix'],
 }
