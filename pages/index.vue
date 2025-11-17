@@ -2,16 +2,6 @@
 import { categoryLabels } from '@/mocks/categoryLabels'
 import { hideElementsInSecondRow } from '@/utils/domUtils'
 
-const buttonStyle = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  width: '13.75rem',
-  height: '2.8125rem',
-  fontSize: '1.125rem',
-  fontWeight: 600,
-}
-
 onMounted(() => {
   nextTick(() => {
     hideElementsInSecondRow('.main__content--align', 'category-button')
@@ -30,50 +20,59 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="main__content">
-    <LiveRecommendation />
-    <LiveRecommendation />
-    <TopCategories />
-    <section class="main__content--align">
-      <TheButton
+  <div class="home">
+    <ViewsHomeLiveRecommendation />
+    <ViewsHomeLiveRecommendation />
+    <ViewsHomeTopCategories />
+    <section class="home__categories">
+      <UiTheButton
         v-for="button in categoryLabels"
         :key="button.id"
-        :style="buttonStyle"
-        class="category-button"
+        :primary="true"
+        class="home__button"
       >
         {{ button.text }}
-        <component :is="button.icon" class="icon" />
-      </TheButton>
+        <component :is="button.icon" class="home__icon" />
+      </UiTheButton>
     </section>
-    <LiveRecommendation />
-    <LiveRecommendation />
+    <ViewsHomeLiveRecommendation />
+    <ViewsHomeLiveRecommendation />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.main__content {
+.home {
   @include flex(column, flex-start, center, wrap, 1.25rem);
+  overflow: hidden;
   width: 100%;
-  &--align {
+  &__categories {
     @include flex(row, space-between, center, wrap, 1.25rem);
     padding: 0 0.625rem;
-    .category-button {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: auto;
-      &:hover {
-        transform: scale(1.025);
-        transition: all 0.2s ease-in-out;
-      }
-    }
-    .icon {
-      position: relative;
-    }
+
     @media screen and (max-width: 48rem) {
       justify-content: center;
     }
+  }
+
+  &__button {
+    @include flex(row, flex-start, center);
+    margin: 0;
+    width: auto;
+    position: relative;
+    min-width: 13.75rem;
+    padding: 1rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+    &:hover {
+      transform: scale(1.025);
+    }
+  }
+
+  &__icon {
+    position: absolute;
+    top: -0.3125rem;
+    right: -3.125rem;
   }
 }
 </style>
