@@ -14,7 +14,11 @@ export default defineNuxtConfig({
     '@nuxt/ui',
   ],
 
-  css: ['@/assets/styles/reset.css', '@/assets/styles/main.scss'],
+  css: [
+    '@/assets/styles/fonts.css',
+    '@/assets/styles/variables.scss',
+    '@/assets/styles/reset.css',
+  ],
 
   vite: {
     css: {

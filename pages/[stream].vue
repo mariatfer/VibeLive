@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { ref, onMounted, provide  } from 'vue'
-import { TwitchAPI } from '@/utils/TwitchAPI'
-import getToken from '@/utils/TwitchAuth'
-import type { ApiResponse, Stream } from '@/types/types'
-
+import { TwitchAPI, getToken } from '@/utils/TwitchAPI'
+import type { ApiResponse, Stream } from '@/interfaces/twitch'
 
 definePageMeta({
   layout: false,
@@ -32,8 +29,6 @@ onMounted(async () => {
     throw new FetchError('Error fetching stream data or token:' + error)
   }
 })
-
-provide('stream', streamData)
 </script>
 
 <template>
@@ -42,17 +37,20 @@ provide('stream', streamData)
       <article class="streamer">
         <div v-if="streamData" class="streamer__video-container">
           <iframe
-            :src="`https://player.twitch.tv/?channel=${streamData?.user_name}&parent=vibe-live.vercel.app`"
+            :src="`https://player.twitch.tv/?channel=${streamData?.user_name}&parent=vibe-live.vercel.app&autoplay=false`"
             allowfullscreen
             frameborder="0"
             class="streamer__video"
           />
         </div>
-        <StreamData v-if="streamData" />
+        <section class="streamer__data">
+          <ViewsStreamThumbnail v-if="streamData" v-bind="streamData" />
+          <ViewsStreamInfo v-if="streamData" v-bind="streamData" />
+        </section>
         <h3 v-if="!isLoading">About {{ streamData?.user_name }}</h3>
-        <ChannelData v-if="streamData" v-bind="streamData" />
+        <ViewsStreamChannelData v-if="streamData" v-bind="streamData" />
       </article>
-      <TheChat v-if="streamData" v-bind="streamData" />
+      <ViewsStreamTheChat v-if="streamData" v-bind="streamData" />
     </div>
   </NuxtLayout>
 </template>
@@ -80,6 +78,11 @@ provide('stream', streamData)
       width: 100%;
       height: 100%;
       border: 0;
+    }
+
+    &__data {
+      @include flex(row, flex-start, flex-start, nowrap, 0.125rem);
+      width: 100%;
     }
   }
 }
